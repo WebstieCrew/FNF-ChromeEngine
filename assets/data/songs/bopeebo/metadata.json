@@ -1,0 +1,17 @@
+{
+  "songName": "Bopeebo",
+  "artist": "Kawai Sprite",
+  "bpm": 100,
+  "speed": 1.0,
+  "stage": "stage",
+  "characters": {
+    "player": "bf",
+    "opponent": "dad",
+    "girlfriend": "gf"
+  },
+  "difficulties": ["Easy", "Normal", "Hard"],
+  "parsedHealthIcon": {
+    "player": "bf",
+    "opponent": "dad"
+  }
+}
