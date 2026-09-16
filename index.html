@@ -66,6 +66,26 @@
 
   <script src="project.js"></script>
   <script src="source/funkin/Highscore.js"></script>
+  <script src="source/funkin/play/notes/Strumline.js"></script>
+  <script src="source/funkin/play/PlayState.js"></script>
   <script src="source/Main.js"></script>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const storyButton = document.querySelector('[data-action="story"]');
+      const menuOverlay = document.getElementById("menu-overlay");
+
+      if (storyButton) {
+        storyButton.addEventListener("click", () => {
+          if (menuOverlay) {
+            menuOverlay.style.display = "none";
+          }
+          if (window.game && typeof PlayState !== "undefined") {
+            window.game.switchState(new PlayState());
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
