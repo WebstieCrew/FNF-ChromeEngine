@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FNF: Chrome Engine</title>
   <style>
     * {
@@ -10,6 +10,7 @@
       padding: 0;
       box-sizing: border-box;
       user-select: none;
+      -webkit-user-select: none;
     }
     body, html {
       width: 100%;
@@ -26,6 +27,19 @@
       justify-content: center;
       align-items: center;
     }
+    
+    @media screen and (orientation: portrait) {
+      #game-container {
+        width: 100vh;
+        height: 100vw;
+        transform: rotate(90deg);
+        transform-origin: center center;
+        position: absolute;
+        top: calc(50% - 50vw);
+        left: calc(50% - 50vh);
+      }
+    }
+
     canvas {
       position: absolute;
       top: 0;
@@ -79,6 +93,9 @@
 
       if (storyButton) {
         storyButton.addEventListener("click", () => {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(() => {});
+          }
           if (menuOverlay) {
             menuOverlay.style.display = "none";
           }
