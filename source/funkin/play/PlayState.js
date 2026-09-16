@@ -12,8 +12,13 @@ class PlayState {
     this.songSpeed = 1.0;
     this.songPosition = 0;
 
+    this.metadata = null;
     this.song = null;
     this.stage = null;
+
+    this.boyfriend = null;
+    this.dad = null;
+
     this.playerStrumline = null;
     this.opponentStrumline = null;
     this.hitbox = null;
@@ -21,17 +26,37 @@ class PlayState {
     this.notes = [];
     this.camera = { x: 0, y: 0, zoom: 1.0 };
     this.isMobile = false;
+
+    this.singAnims = ["singLEFT", "singDOWN", "singUP", "singRIGHT"];
+    this.missAnims = ["singLEFTmiss", "singDOWNmiss", "singUPmiss", "singRIGHTmiss"];
   }
 
   async create(gameInstance) {
     this.game = gameInstance;
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    this.stage = new Stage("stage");
+    await this.loadMetadata();
+
+    const stageToLoad = this.metadata && this.metadata.stage ? this.metadata.stage : "stage";
+    this.stage = new Stage(stageToLoad);
     await this.stage.load();
 
     if (this.stage.config && this.stage.config.zoom) {
       this.camera.zoom = this.stage.config.zoom;
+    }
+
+    const bfName = (this.metadata && this.metadata.characters && this.metadata.characters.player) || "bf";
+    const dadName = (this.metadata && this.metadata.characters && this.metadata.characters.opponent) || "dad";
+
+    const bfPos = this.stage.boyfriendPosition || { x: 770, y: 450 };
+    const dadPos = this.stage.dadPosition || { x: 100, y: 100 };
+
+    if (typeof Character !== "undefined") {
+      this.boyfriend = new Character(bfPos.x, bfPos.y, bfName, true);
+      await this.boyfriend.load();
+
+      this.dad = new Character(dadPos.x, dadPos.y, dadName, false);
+      await this.dad.load();
     }
 
     const width = this.game.config.width || 1280;
@@ -59,6 +84,19 @@ class PlayState {
 
     this.setupInput();
     await this.loadSong(this.songName, this.difficulty);
+  }
+
+  async loadMetadata() {
+    try {
+      const response = await fetch(`assets/data/songs/${this.songName.toLowerCase()}/metadata.json`);
+      if (response.ok) {
+        this.metadata = await response.json();
+        this.songBpm = this.metadata.bpm || 100;
+        this.songSpeed = this.metadata.speed || 1.0;
+      }
+    } catch (err) {
+      this.metadata = null;
+    }
   }
 
   setupInput() {
@@ -104,7 +142,7 @@ class PlayState {
 
   generateDummyNotes() {
     this.notes = [];
-    const interval = 600;
+    const interval = (60 / this.songBpm) * 1000;
 
     for (let i = 0; i < 40; i++) {
       const strumTime = (i + 1) * interval;
@@ -133,6 +171,14 @@ class PlayState {
 
       if (this.stage) {
         this.stage.update(deltaTime);
+      }
+
+      if (this.boyfriend) {
+        this.boyfriend.update(deltaTime);
+      }
+
+      if (this.dad) {
+        this.dad.update(deltaTime);
       }
 
       if (this.playerStrumline) {
@@ -181,6 +227,9 @@ class PlayState {
         if (this.opponentStrumline) {
           this.opponentStrumline.confirm(note.noteData);
         }
+        if (this.dad) {
+          this.dad.playAnim(this.singAnims[note.noteData], true);
+        }
         if (this.song) {
           this.song.setVolume("voicesDad", 1);
           this.song.setVolume("voices", 1);
@@ -189,7 +238,7 @@ class PlayState {
       }
 
       if (note.isPlayerTarget && !note.wasHit && this.songPosition - note.strumTime > 150) {
-        this.noteMiss();
+        this.noteMiss(note.noteData);
         this.notes.splice(i, 1);
       }
     }
@@ -200,16 +249,24 @@ class PlayState {
     this.combo += 1;
     this.health = Math.min(100, this.health + 2.3);
 
+    if (this.boyfriend) {
+      this.boyfriend.playAnim(this.singAnims[note.noteData], true);
+    }
+
     if (this.song) {
       this.song.setVolume("voicesBf", 1);
       this.song.setVolume("voices", 1);
     }
   }
 
-  noteMiss() {
+  noteMiss(directionIndex = 0) {
     this.combo = 0;
     this.misses += 1;
     this.health = Math.max(0, this.health - 4.75);
+
+    if (this.boyfriend) {
+      this.boyfriend.playAnim(this.missAnims[directionIndex], true);
+    }
 
     if (this.song) {
       this.song.setVolume("voicesBf", 0);
@@ -222,6 +279,9 @@ class PlayState {
   }
 
   gameOver() {
+    if (this.boyfriend) {
+      this.boyfriend.playAnim("firstDeath", true);
+    }
     if (this.song) {
       this.song.pause();
     }
@@ -239,6 +299,14 @@ class PlayState {
 
     if (this.stage) {
       this.stage.render(ctx, this.camera.x, this.camera.y);
+    }
+
+    if (this.dad) {
+      this.dad.render(ctx, this.camera.x, this.camera.y);
+    }
+
+    if (this.boyfriend) {
+      this.boyfriend.render(ctx, this.camera.x, this.camera.y);
     }
 
     ctx.restore();
@@ -272,6 +340,8 @@ class PlayState {
     }
     this.notes = [];
     this.stage = null;
+    this.boyfriend = null;
+    this.dad = null;
   }
 }
 
