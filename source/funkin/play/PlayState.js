@@ -12,6 +12,7 @@ class PlayState {
     this.songSpeed = 1.0;
     this.songPosition = 0;
 
+    this.song = null;
     this.stage = null;
     this.playerStrumline = null;
     this.opponentStrumline = null;
@@ -57,7 +58,7 @@ class PlayState {
     }
 
     this.setupInput();
-    this.loadSong(this.songName, this.difficulty);
+    await this.loadSong(this.songName, this.difficulty);
   }
 
   setupInput() {
@@ -85,12 +86,18 @@ class PlayState {
     });
   }
 
-  loadSong(song, diff) {
+  async loadSong(song, diff) {
     this.songName = song;
     this.difficulty = diff;
     this.score = 0;
     this.health = 50;
-    this.songPosition = -2000;
+    this.songPosition = 0;
+
+    if (typeof Song !== "undefined") {
+      this.song = new Song(this.songName);
+      await this.song.load();
+      this.song.play();
+    }
 
     this.generateDummyNotes();
   }
@@ -100,7 +107,7 @@ class PlayState {
     const interval = 600;
 
     for (let i = 0; i < 40; i++) {
-      const strumTime = i * interval;
+      const strumTime = (i + 1) * interval;
       const noteData = i % 4;
       const isPlayerTarget = i % 2 === 0;
       const sustainLength = i % 5 === 0 ? 400 : 0;
@@ -117,7 +124,12 @@ class PlayState {
 
   update(deltaTime) {
     if (this.game && !this.game.isPaused) {
-      this.songPosition += deltaTime * 1000;
+      if (this.song && this.song.isLoaded) {
+        this.song.sync();
+        this.songPosition = this.song.time;
+      } else {
+        this.songPosition += deltaTime * 1000;
+      }
 
       if (this.stage) {
         this.stage.update(deltaTime);
@@ -169,6 +181,10 @@ class PlayState {
         if (this.opponentStrumline) {
           this.opponentStrumline.confirm(note.noteData);
         }
+        if (this.song) {
+          this.song.setVolume("voicesDad", 1);
+          this.song.setVolume("voices", 1);
+        }
         continue;
       }
 
@@ -183,6 +199,11 @@ class PlayState {
     this.score += 350;
     this.combo += 1;
     this.health = Math.min(100, this.health + 2.3);
+
+    if (this.song) {
+      this.song.setVolume("voicesBf", 1);
+      this.song.setVolume("voices", 1);
+    }
   }
 
   noteMiss() {
@@ -190,12 +211,20 @@ class PlayState {
     this.misses += 1;
     this.health = Math.max(0, this.health - 4.75);
 
+    if (this.song) {
+      this.song.setVolume("voicesBf", 0);
+      this.song.setVolume("voices", 0);
+    }
+
     if (this.health <= 0) {
       this.gameOver();
     }
   }
 
   gameOver() {
+    if (this.song) {
+      this.song.pause();
+    }
     if (typeof Highscore !== "undefined") {
       Highscore.saveScore(this.songName, this.score, this.difficulty);
     }
@@ -233,6 +262,10 @@ class PlayState {
   }
 
   destroy() {
+    if (this.song) {
+      this.song.destroy();
+      this.song = null;
+    }
     if (this.hitbox) {
       this.hitbox.destroy();
       this.hitbox = null;
