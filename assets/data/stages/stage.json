@@ -1,0 +1,35 @@
+{
+  "zoom": 0.9,
+  "boyfriend": [770, 450],
+  "opponent": [100, 100],
+  "gf": [400, 130],
+  "sprites": [
+    {
+      "image": "stageback",
+      "x": -600,
+      "y": -200,
+      "scrollX": 0.2,
+      "scrollY": 0.2,
+      "scale": 1.0,
+      "zIndex": 0
+    },
+    {
+      "image": "stagefront",
+      "x": -650,
+      "y": 600,
+      "scrollX": 0.9,
+      "scrollY": 0.9,
+      "scale": 1.1,
+      "zIndex": 10
+    },
+    {
+      "image": "stagecurtains",
+      "x": -500,
+      "y": -300,
+      "scrollX": 1.3,
+      "scrollY": 1.3,
+      "scale": 0.9,
+      "zIndex": 100
+    }
+  ]
+}
