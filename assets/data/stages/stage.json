@@ -5,7 +5,7 @@
   "gf": [400, 130],
   "sprites": [
     {
-      "image": "stageback",
+      "image": "stages/week1/stageback",
       "x": -600,
       "y": -200,
       "scrollX": 0.2,
@@ -14,7 +14,7 @@
       "zIndex": 0
     },
     {
-      "image": "stagefront",
+      "image": "stages/week1/stagefront",
       "x": -650,
       "y": 600,
       "scrollX": 0.9,
@@ -23,7 +23,7 @@
       "zIndex": 10
     },
     {
-      "image": "stagecurtains",
+      "image": "stages/week1/stagecurtains",
       "x": -500,
       "y": -300,
       "scrollX": 1.3,
