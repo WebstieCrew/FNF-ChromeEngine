@@ -19,10 +19,12 @@ class PlayState {
 
     this.notes = [];
     this.camera = { x: 0, y: 0, zoom: 1.0 };
+    this.isMobile = false;
   }
 
   async create(gameInstance) {
     this.game = gameInstance;
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     this.stage = new Stage("stage");
     await this.stage.load();
@@ -31,10 +33,26 @@ class PlayState {
       this.camera.zoom = this.stage.config.zoom;
     }
 
-    this.opponentStrumline = new Strumline(100, 50, false);
-    this.playerStrumline = new Strumline(730, 50, true);
+    const width = this.game.config.width || 1280;
+    const height = this.game.config.height || 720;
 
-    if (typeof FunkinHitbox !== "undefined") {
+    if (this.isMobile) {
+      const strumlineWidth = 4 * 112 * 0.7;
+      const playerX = (width - strumlineWidth) / 2;
+      const playerY = height * 0.52;
+      this.playerStrumline = new Strumline(playerX, playerY, true);
+
+      const opponentX = (width - strumlineWidth) / 2;
+      const opponentY = 30;
+      this.opponentStrumline = new Strumline(opponentX, opponentY, false);
+      this.opponentStrumline.scale = 0.5;
+      this.opponentStrumline.spacing = 80;
+    } else {
+      this.opponentStrumline = new Strumline(100, 50, false);
+      this.playerStrumline = new Strumline(730, 50, true);
+    }
+
+    if (this.isMobile && typeof FunkinHitbox !== "undefined") {
       this.hitbox = new FunkinHitbox(this.playerStrumline);
     }
 
@@ -148,7 +166,9 @@ class PlayState {
 
       if (!note.isPlayerTarget && !note.wasHit && note.strumTime <= this.songPosition) {
         note.wasHit = true;
-        this.opponentStrumline.confirm(note.noteData);
+        if (this.opponentStrumline) {
+          this.opponentStrumline.confirm(note.noteData);
+        }
         continue;
       }
 
@@ -182,6 +202,9 @@ class PlayState {
   }
 
   render(ctx) {
+    const width = this.game.config.width || 1280;
+    const height = this.game.config.height || 720;
+
     ctx.save();
     ctx.scale(this.camera.zoom, this.camera.zoom);
 
@@ -191,15 +214,16 @@ class PlayState {
 
     ctx.restore();
 
-    if (this.hitbox && this.game) {
-      this.hitbox.render(ctx, this.game.config.width || 1280, this.game.config.height || 720);
-    }
-
     if (this.opponentStrumline) {
       this.opponentStrumline.render(ctx, this.notes, this.songPosition, this.songSpeed);
     }
+
     if (this.playerStrumline) {
       this.playerStrumline.render(ctx, this.notes, this.songPosition, this.songSpeed);
+    }
+
+    if (this.hitbox) {
+      this.hitbox.render(ctx, width, height);
     }
 
     ctx.fillStyle = "#ffffff";
