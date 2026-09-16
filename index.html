@@ -9,25 +9,60 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      user-select: none;
     }
     body, html {
       width: 100%;
       height: 100%;
       overflow: hidden;
       background-color: #000;
-      font-family: Arial, sans-serif;
+      font-family: 'Impact', 'Arial Black', sans-serif;
     }
     #game-container {
+      position: relative;
       width: 100vw;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
     }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    #menu-overlay {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+    .menu-item {
+      font-size: 3rem;
+      color: #fff;
+      text-transform: uppercase;
+      text-shadow: 4px 4px 0px #000;
+      cursor: pointer;
+      transition: transform 0.1s ease, color 0.1s ease;
+    }
+    .menu-item:hover, .menu-item.selected {
+      color: #31b0d5;
+      transform: scale(1.15) rotate(-2deg);
+    }
   </style>
 </head>
 <body>
-  <div id="game-container"></div>
+  <div id="game-container">
+    <div id="menu-overlay">
+      <div class="menu-item selected" data-action="story">Story Mode</div>
+      <div class="menu-item" data-action="freeplay">Freeplay</div>
+      <div class="menu-item" data-action="options">Options</div>
+    </div>
+  </div>
 
   <script src="project.js"></script>
   <script src="source/funkin/Highscore.js"></script>
