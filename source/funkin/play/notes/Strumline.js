@@ -16,18 +16,25 @@ class Strumline {
 
     this.directions = ["left", "down", "up", "right"];
     
-    this.receptors = Array.from({ length: 4 }, (_, i) => ({
-      dir: this.directions[i],
-      state: "static",
-      frame: `arrow static instance ${(i + 1) * 10000}`,
-      animTimer: 0
-    }));
+    this.receptors = [
+      { dir: "left", state: "static", frame: "arrow static instance 10000", animTimer: 0 },
+      { dir: "down", state: "static", frame: "arrow static instance 20000", animTimer: 0 },
+      { dir: "up", state: "static", frame: "arrow static instance 40000", animTimer: 0 },
+      { dir: "right", state: "static", frame: "arrow static instance 30000", animTimer: 0 }
+    ];
+
+    this.staticFrames = [
+      "arrow static instance 10000",
+      "arrow static instance 20000",
+      "arrow static instance 40000",
+      "arrow static instance 30000"
+    ];
 
     this.frames = new Map([
       ["arrow static instance 10000", { x: 488, y: 238, w: 155, h: 158, ox: 0, oy: 0 }],
       ["arrow static instance 20000", { x: 647, y: 238, w: 157, h: 155, ox: 0, oy: 0 }],
-      ["arrow static instance 30000", { x: 808, y: 238, w: 155, h: 157, ox: 0, oy: 0 }],
       ["arrow static instance 40000", { x: 323, y: 240, w: 157, h: 154, ox: 0, oy: 0 }],
+      ["arrow static instance 30000", { x: 808, y: 238, w: 155, h: 157, ox: 0, oy: 0 }],
 
       ["purple instance 10000", { x: 0, y: 398, w: 154, h: 157, ox: 0, oy: 0 }],
       ["blue instance 10000", { x: 0, y: 240, w: 158, h: 154, ox: 0, oy: 0 }],
@@ -86,7 +93,7 @@ class Strumline {
     const receptor = this.receptors[directionIndex];
     if (receptor) {
       receptor.state = "static";
-      receptor.frame = `arrow static instance ${(directionIndex + 1) * 10000}`;
+      receptor.frame = this.staticFrames[directionIndex];
       receptor.animTimer = 0;
     }
   }
