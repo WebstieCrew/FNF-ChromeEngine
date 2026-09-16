@@ -12,15 +12,23 @@ class PlayState {
     this.songSpeed = 1.0;
     this.songPosition = 0;
 
+    this.stage = null;
     this.playerStrumline = null;
     this.opponentStrumline = null;
 
     this.notes = [];
-    this.keysPressed = { left: false, down: false, up: false, right: false };
+    this.camera = { x: 0, y: 0, zoom: 1.0 };
   }
 
-  create(gameInstance) {
+  async create(gameInstance) {
     this.game = gameInstance;
+
+    this.stage = new Stage("stage");
+    await this.stage.load();
+
+    if (this.stage.config && this.stage.config.zoom) {
+      this.camera.zoom = this.stage.config.zoom;
+    }
 
     this.opponentStrumline = new Strumline(100, 50, false);
     this.playerStrumline = new Strumline(730, 50, true);
@@ -40,7 +48,7 @@ class PlayState {
     window.addEventListener("keydown", (e) => {
       if (e.repeat) return;
       const noteData = keyMap[e.code];
-      if (noteData !== undefined) {
+      if (noteData !== undefined && this.playerStrumline) {
         this.playerStrumline.press(noteData);
         this.checkHit(noteData);
       }
@@ -48,7 +56,7 @@ class PlayState {
 
     window.addEventListener("keyup", (e) => {
       const noteData = keyMap[e.code];
-      if (noteData !== undefined) {
+      if (noteData !== undefined && this.playerStrumline) {
         this.playerStrumline.release(noteData);
       }
     });
@@ -68,16 +76,18 @@ class PlayState {
     this.notes = [];
     const interval = 600;
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 40; i++) {
       const strumTime = i * interval;
       const noteData = i % 4;
       const isPlayerTarget = i % 2 === 0;
+      const sustainLength = i % 5 === 0 ? 400 : 0;
 
       this.notes.push({
         strumTime: strumTime,
         noteData: noteData,
         isPlayerTarget: isPlayerTarget,
-        hit: false
+        sustainLength: sustainLength,
+        wasHit: false
       });
     }
   }
@@ -85,6 +95,19 @@ class PlayState {
   update(deltaTime) {
     if (this.game && !this.game.isPaused) {
       this.songPosition += deltaTime * 1000;
+
+      if (this.stage) {
+        this.stage.update(deltaTime);
+      }
+
+      if (this.playerStrumline) {
+        this.playerStrumline.update(deltaTime);
+      }
+
+      if (this.opponentStrumline) {
+        this.opponentStrumline.update(deltaTime);
+      }
+
       this.updateNotes();
     }
   }
@@ -95,15 +118,14 @@ class PlayState {
     for (let i = 0; i < this.notes.length; i++) {
       const note = this.notes[i];
 
-      if (note.isPlayerTarget && !note.hit && note.noteData === noteData) {
+      if (note.isPlayerTarget && !note.wasHit && note.noteData === noteData) {
         const diff = Math.abs(note.strumTime - this.songPosition);
 
         if (diff <= hitThreshold) {
-          note.hit = true;
+          note.wasHit = true;
           this.playerStrumline.confirm(noteData);
           this.noteHit(note);
-          this.notes.splice(i, 1);
-          return;
+          break;
         }
       }
     }
@@ -113,13 +135,13 @@ class PlayState {
     for (let i = this.notes.length - 1; i >= 0; i--) {
       const note = this.notes[i];
 
-      if (!note.isPlayerTarget && note.strumTime <= this.songPosition) {
+      if (!note.isPlayerTarget && !note.wasHit && note.strumTime <= this.songPosition) {
+        note.wasHit = true;
         this.opponentStrumline.confirm(note.noteData);
-        this.notes.splice(i, 1);
         continue;
       }
 
-      if (note.isPlayerTarget && this.songPosition - note.strumTime > 150) {
+      if (note.isPlayerTarget && !note.wasHit && this.songPosition - note.strumTime > 150) {
         this.noteMiss();
         this.notes.splice(i, 1);
       }
@@ -149,6 +171,15 @@ class PlayState {
   }
 
   render(ctx) {
+    ctx.save();
+    ctx.scale(this.camera.zoom, this.camera.zoom);
+
+    if (this.stage) {
+      this.stage.render(ctx, this.camera.x, this.camera.y);
+    }
+
+    ctx.restore();
+
     if (this.opponentStrumline) {
       this.opponentStrumline.render(ctx, this.notes, this.songPosition, this.songSpeed);
     }
@@ -164,6 +195,7 @@ class PlayState {
 
   destroy() {
     this.notes = [];
+    this.stage = null;
   }
 }
 
