@@ -15,6 +15,7 @@ class PlayState {
     this.stage = null;
     this.playerStrumline = null;
     this.opponentStrumline = null;
+    this.hitbox = null;
 
     this.notes = [];
     this.camera = { x: 0, y: 0, zoom: 1.0 };
@@ -32,6 +33,10 @@ class PlayState {
 
     this.opponentStrumline = new Strumline(100, 50, false);
     this.playerStrumline = new Strumline(730, 50, true);
+
+    if (typeof FunkinHitbox !== "undefined") {
+      this.hitbox = new FunkinHitbox(this.playerStrumline);
+    }
 
     this.setupInput();
     this.loadSong(this.songName, this.difficulty);
@@ -108,6 +113,10 @@ class PlayState {
         this.opponentStrumline.update(deltaTime);
       }
 
+      if (this.hitbox) {
+        this.hitbox.update(deltaTime);
+      }
+
       this.updateNotes();
     }
   }
@@ -123,7 +132,9 @@ class PlayState {
 
         if (diff <= hitThreshold) {
           note.wasHit = true;
-          this.playerStrumline.confirm(noteData);
+          if (this.playerStrumline) {
+            this.playerStrumline.confirm(noteData);
+          }
           this.noteHit(note);
           break;
         }
@@ -180,6 +191,10 @@ class PlayState {
 
     ctx.restore();
 
+    if (this.hitbox && this.game) {
+      this.hitbox.render(ctx, this.game.config.width || 1280, this.game.config.height || 720);
+    }
+
     if (this.opponentStrumline) {
       this.opponentStrumline.render(ctx, this.notes, this.songPosition, this.songSpeed);
     }
@@ -194,6 +209,10 @@ class PlayState {
   }
 
   destroy() {
+    if (this.hitbox) {
+      this.hitbox.destroy();
+      this.hitbox = null;
+    }
     this.notes = [];
     this.stage = null;
   }
